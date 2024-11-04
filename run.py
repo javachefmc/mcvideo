@@ -137,24 +137,24 @@ def startup():
             # valid input
             break
 
-    if selection == 1:
-        create_full()
-    elif selection == 2:
-        create_datapack_only()
-    elif selection == 3:
-        reset()
-    else:
-        error("An internal error occured; please report this to the developer.")
+    # if selection == 1:
+    #     create_full()
+    # elif selection == 2:
+    #     create_datapack_only()
+    # elif selection == 3:
+    #     reset()
+    # else:
+    #     error("An internal error occured; please report this to the developer.")
 
-    # match selection:
-    #     case 1:
-    #         create_full()
-    #     case 2:
-    #         create_datapack_only()
-    #     case 3:
-    #         reset()
-    #     case _:
-    #         error("An internal error occured; please report this to the developer.")
+    match selection:
+        case 1:
+            create_full()
+        case 2:
+            create_datapack_only()
+        case 3:
+            reset()
+        case _:
+            error("An internal error occured; please report this to the developer.")
 
 
 def get_video_name():
