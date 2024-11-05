@@ -49,40 +49,38 @@ What would you like to do today?
 def check_for_ffmpeg():
     # Runs an ffmpeg version check and reads result
 
-    command = 'ffmpeg -version'
-    process = shlex.split(command)
-    has_ffmpeg = 0
-    try:
-        output = subprocess.check_output(process, shell=True)
-        output = output.decode("utf-8")
-        if "Copyright" in output:
-            success("Detected ffmpeg.")
-            has_ffmpeg = 1
-        else:
-            error("\nCould not find ffmpeg.")
-    except:
-        has_ffmpeg = -1
-    
-    return has_ffmpeg
+    shell_output = get_shell_output("ffmpeg -version")
+
+    if "Copyright" in shell_output[1] or shell_output[0] == 1:
+        success("Detected ffmpeg")
+        return 1
+    elif shell_output[0] == -1:
+        error("\nError: ffprobe is not installed or is inaccessible.")
+        return 0
+    else:
+        return -1
 
 def check_for_ffprobe():
     # Runs an ffprobe version check and reads result
 
-    command = 'ffprobe -version'
+    shell_output = get_shell_output("ffprobe -version")
+
+    if "Copyright" in shell_output[1] or shell_output[0] == 1:
+        success("Detected ffprobe")
+        return 1
+    elif shell_output[0] == -1:
+        error("\nError: ffprobe is not installed or is inaccessible.")
+        return 0
+    else:
+        return -1
+
+def get_shell_output(command):
     process = shlex.split(command)
-    has_ffprobe = 0
     try:
-        output = subprocess.check_output(process, shell=True)
-        output = output.decode("utf-8")
-        if "Copyright" in output:
-            success("Detected ffprobe.")
-            has_ffprobe = 1
-        else:
-            error("\nCould not find ffprobe.")
-    except:
-        has_ffprobe = -1
-    
-    return has_ffprobe
+        result = subprocess.run(process, capture_output=True)
+        return [result.returncode, str(result.stdout)]
+    except FileNotFoundError:
+        return [-1, ""]
 
 def clear():
     # Clears console window
@@ -94,6 +92,17 @@ def clear():
     else:
         _ = system('clear')
 
+def is_int(s):
+    try: 
+        int(s)
+    except ValueError:
+        return False
+    else:
+        if int(s) < 1:
+            return False
+        else:
+            return True
+
 def reset():
     # Delete generated files and recreate folder structure
 
@@ -103,7 +112,7 @@ def reset():
     print("Reset complete.")
 
     while True:
-        answer = input("Would you like to start over? [Y/N] ")
+        answer = input("Would you like to start over? [Y/N] > ")
         if answer.lower() in ["y","yes"]:
             # Do stuff
             break
@@ -171,9 +180,10 @@ def get_video_name():
             print ("\nThis name would cause an error in game. Please enter a different one.")
             continue
         
-        print("\nYour video will be encoded as:\n" + video_name + "\n")
+        print("\nYour video will be encoded as:")
+        warning(video_name)
 
-        answer = input("Is this name OK? [Y/N] ")
+        answer = input("\nIs this name OK? [Y/N] > ")
         if answer.lower() in ["y","yes"]:
             # Do stuff
             break
@@ -183,7 +193,7 @@ def get_video_name():
         else:
             continue
     
-    print("Please keep note of this name for future use in-game.")
+    warning("Please keep note of this name for future use in-game.")
     return video_name
 
 def get_video_path():
@@ -219,8 +229,8 @@ def get_frame_count_from_user():
 
     while True:
         video_length = input("> ")
-        if (video_length.is_integer()):
-            return video_length
+        if (is_int(video_length)):
+            return int(video_length)
         else:
             print("\nThat does not appear to be valid.\nPlease enter a whole number for the number of frames in your video:")
             continue
