@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+output_dir = "output/"
+resourcepack_dir = output_dir + "mcvideo_resourcepack/"
+datapack_dir = output_dir + "mcvideo_datapack/"
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -31,20 +35,55 @@ except:
     quit()
 
 # Main program intro
-from os import system, name, path
-import re, shlex
-import subprocess
-from subprocess import Popen, PIPE
+from os import system, name, path, makedirs, unlink, walk
+import re, shlex, subprocess, shutil
+
+# pack.mcmeta versions for 1.21.2 are <> and <>
+
+datapack_mcmeta = """{
+  "pack": {
+    "pack_format": 41,
+    "description": "MCVideo Generated Datapack"
+  }
+}
+"""
+
+resourcepack_mcmeta = """{
+  "pack": {
+    "pack_format": 34,
+    "description": "MCVideo Generated Resource Pack"
+  }
+}
+"""
+
+datapack_structure = [
+    datapack_dir + "data/javachef/functions",
+    datapack_dir + "data/minecraft/tags"
+]
+
+resourcepack_structure = [
+    resourcepack_dir + "assets/javachef/"
+]
 
 greeting = """
 MC Video Generator v1.0 by JavaChef
       
 What would you like to do today?
 \t1) Create resoucepack and datapack from video
-\t2) Create datapack only (you have frames)
+\t2) Create datapack only (select if you already have frames)
 \t3) Reset tool
 
 """
+
+def prompt_yesno(message):
+    while True:
+        answer = input(message + " [Y/N] > ")
+        if answer.lower() in ["y","yes"]:
+            return True
+        elif answer.lower() in ["n","no"]:
+            return False
+        else:
+            continue # 
 
 def check_for_ffmpeg():
     # Runs an ffmpeg version check and reads result
@@ -82,14 +121,24 @@ def get_shell_output(command):
     except FileNotFoundError:
         return [-1, ""]
 
+def self_path(): 
+    path = path.dirname(sys.argv[0]) 
+    if not path: 
+        path = '.' 
+    return path 
+
+def empty_folder(path):
+    for root, dirs, files in walk(path):
+        for f in files:
+            unlink(path.join(root, f))
+        for d in dirs:
+            shutil.rmtree(path.join(root, d))
+
 def clear():
     # Clears console window
-
-    # Windows
-    if name == 'nt':
+    if name == 'nt': # Windows
         _ = system('cls')
-    # Mac and linux (os.name is 'posix')
-    else:
+    else: # Mac and linux (os.name is 'posix')
         _ = system('clear')
 
 def is_int(s):
@@ -107,9 +156,26 @@ def reset():
     # Delete generated files and recreate folder structure
 
     print("Resetting...")
+    try:
+        shutil.rmtree("output/")
 
-    # TODO: main code
-    print("Reset complete.")
+        for path in datapack_structure:
+            makedirs(path)
+        for path in resourcepack_structure:
+            makedirs(path)
+
+        with open(datapack_dir + "pack.mcmeta", "w") as file:
+            file.write(datapack_mcmeta)
+            file.close()
+
+        with open(resourcepack_dir + "pack.mcmeta", "w") as file:
+            file.write(resourcepack_mcmeta)
+            file.close()
+
+        success("Reset complete.")
+    except:
+        warning("An unidentfied error occurred while resetting.")
+
 
     while True:
         answer = input("Would you like to start over? [Y/N] > ")
@@ -204,7 +270,7 @@ def get_video_path():
     while True:
         video_path = str(input("> "))
 
-        if(path.isfile(video_path)):
+        if(path.isfile(video_path.strip())):
             print("\nFile exists.")
             print("Checking if we can convert this...")
 
@@ -281,7 +347,6 @@ def get_frame_count_from_video(path):
     
     return frame_count
 
-
 def convert_video_to_frames(path):
     # Runs ffmpeg command to convert video path to frames
 
@@ -311,6 +376,8 @@ def create_datapack_only():
 
     video_name = get_video_name()
     frame_count = get_frame_count_from_user()
+
+
 
 
 # Initiates startup process
